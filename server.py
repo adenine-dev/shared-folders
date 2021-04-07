@@ -16,7 +16,6 @@ SERVER_PATH = "server"
 ### to handle the clients
 def handle_client (conn,addr):
 
-
     print(f"[NEW CONNECTION] {addr} connected.")
     conn.send("OK@Welcome to the server".encode(FORMAT))
 
@@ -24,7 +23,7 @@ def handle_client (conn,addr):
         data =  conn.recv(SIZE).decode(FORMAT)
         data = data.split("@")
         cmd = data[0]
-       
+
         send_data = "OK@"
 
         if cmd == "LOGOUT":
@@ -41,7 +40,6 @@ def handle_client (conn,addr):
             files = os.listdir(SERVER_PATH)
             fileName = data[1]
 
-
             if fileName in files: ##  condition if file already exist in the server.
                 send_data += "File exist."
             else:
@@ -49,6 +47,11 @@ def handle_client (conn,addr):
                 with open(os.path.join(SERVER_PATH,fileName), 'wb') as temp_file: ##### creating the file
                     temp_file.write(buff)
                 send_data += "File created"
+
+            conn.send(send_data.encode(FORMAT))
+
+        elif cmd == "DIR":
+            send_data += "files: \n" + '\n'.join([name for name in os.listdir(SERVER_PATH)])
 
             conn.send(send_data.encode(FORMAT))
 
