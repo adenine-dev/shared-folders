@@ -4,57 +4,61 @@
 import os
 import socket
 import threading
+import json
 
-# IP =  "192.168.1.101" #"localhost"
-IP = "localhost"
+IP = "localhost"  # 192.168.1.101
 PORT = 4450
 ADDR = (IP, PORT)
 SIZE = 1024
 FORMAT = "utf-8"
 SERVER_PATH = "server"
 
-# to handle the clients
-
 
 def handle_client(conn, addr):
 
     print(f"[NEW CONNECTION] {addr} connected.")
-    conn.send("OK@Welcome to the server".encode(FORMAT))
+    conn.send("OK@CONNECT@Welcome to the server".encode(FORMAT))
 
     while True:
         data = conn.recv(SIZE).decode(FORMAT)
         data = data.split("@")
         cmd = data[0]
 
-        send_data = "OK@"
+        send_data = ""
 
         if cmd == "LOGOUT":
             break
 
-        elif cmd == "TASK":
-            send_data += "LOGOUT from the server.\n"
-            send_data += "CREATING new file on the server.\n"
-            send_data += "MULTITHREADING: handling multiple clients.\n"
+        # elif cmd == "TASK":
+        #     send_data += "LOGOUT from the server.\n"
+        #     send_data += "CREATING new file on the server.\n"
+        #     send_data += "MULTITHREADING: handling multiple clients.\n"
 
-            conn.send(send_data.encode(FORMAT))
+        #     conn.send(send_data.encode(FORMAT))
 
         elif cmd == "CREATE":
             files = os.listdir(SERVER_PATH)
             fileName = data[1]
 
             if fileName in files:  # condition if file already exist in the server.
-                send_data += "File exist."
+                send_data = "ERR@CREATE@File exists."
             else:
-                buff = b"z"
+                buff = b""
                 with open(os.path.join(SERVER_PATH, fileName), 'wb') as temp_file:  # creating the file
                     temp_file.write(buff)
-                send_data += "File created"
+                send_data = "OK@CREATE@File created"
 
             conn.send(send_data.encode(FORMAT))
 
         elif cmd == "DIR":
-            send_data += "files: \n" + \
-                '\n'.join([name for name in os.listdir(SERVER_PATH)])
+            send_data = "OK@DIR@" + '{ "files": [' + \
+                ','.join(map(lambda f: '{' +
+                             '"filename": "' + f.name + '",' +
+                             '"dir": "' + str(f.is_dir()).lower() + '",' +
+                             '"last_modified": "' + str(f.stat().st_mtime).lower() + '",' +
+                             '"size": "' + str(f.stat().st_size).lower() + '"' +
+                             '}', [
+                                 name for name in os.scandir(SERVER_PATH)])) + "] }"
 
             conn.send(send_data.encode(FORMAT))
 

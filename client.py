@@ -1,9 +1,7 @@
 
-# Author : Ayesha S. Dina
-
 import os
 import socket
-
+import json
 
 # IP = "192.168.1.101" #"localhost"
 IP = "localhost"
@@ -19,15 +17,24 @@ def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
     data = client.recv(SIZE).decode(FORMAT)
-    cmd, msg = data.split("@")
+    status, cmd, res = data.split("@")
     while True:  # multiple communications
-        if cmd == "OK":
-            print(f"{msg}")
+        if status == "OK":
+            if cmd == "CREATE":
+                print(f"{res}")
+            elif cmd == "DIR":
+                res = json.loads(res)
+                print("filename | modified | size")
+                for file in res["files"]:
+                    print(
+                        f"{file['filename']} | {file['last_modified']} | {file['size']}")
+        elif status == "ERR":  # assume all errors are just messages for now.
+            print(f"{res}")
         elif cmd == "DISCONNECTED":
-            print(f"{msg}")
+            print(f"{res}")
             break
         # elif cmd == "DIR":
-        #     print(f"{msg}")
+        #     print(f"{res}")
 
         data = input("> ")
         data = data.split(" ")
@@ -52,7 +59,7 @@ def main():
             continue
 
         data = client.recv(SIZE).decode(FORMAT)
-        cmd, msg = data.split("@")
+        status, cmd, res = data.split("@")
 
     print("Disconnected from the server.")
     client.close()  # close the connection
@@ -60,3 +67,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    input()
