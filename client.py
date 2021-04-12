@@ -38,7 +38,7 @@ def main():
 
         data = input("> ")
         data = data.split(" ")
-        cmd = data[0]
+        cmd = data[0].upper()
 
         if cmd == "TASK":
             client.send(cmd.encode(FORMAT))
