@@ -1,7 +1,8 @@
-
 import os
 import socket
 import json
+import sys
+import datetime
 
 # IP = "192.168.1.101" #"localhost"
 IP = "localhost"
@@ -13,7 +14,6 @@ SERVER_DATA_PATH = "server_data"
 
 
 def main():
-
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
     data = client.recv(SIZE).decode(FORMAT)
@@ -24,17 +24,21 @@ def main():
                 print(f"{res}")
             elif cmd == "DIR":
                 res = json.loads(res)
-                print("filename | modified | size")
-                for file in res["files"]:
-                    print(
-                        f"{file['filename']} | {file['last_modified']} | {file['size']}")
+                print(f"{'filename':<16} | modified | size (bytes)")
+                print(f"------------------------------------------")
+                try:
+                    for file in res["files"]:
+                        modified = datetime.datetime.fromtimestamp(
+                            float(file['last_modified']))
+                        print(
+                            f"{file['filename']:<16} | {f'{modified.hour:02}:{modified.minute:02}':<8} | {file['size']:<8}")
+                except:
+                    print("Unexpected error:", sys.exc_info()[0])
         elif status == "ERR":  # assume all errors are just messages for now.
             print(f"{res}")
         elif cmd == "DISCONNECTED":
             print(f"{res}")
             break
-        # elif cmd == "DIR":
-        #     print(f"{res}")
 
         data = input("> ")
         data = data.split(" ")
