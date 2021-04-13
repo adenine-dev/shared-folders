@@ -23,17 +23,15 @@ def main():
             if cmd == "CREATE":
                 print(f"{res}")
             elif cmd == "DIR":
+                # TODO: maybe change the way this is printed (more data, kb/mb instead of just bytes?)
                 res = json.loads(res)
                 print(f"{'filename':<16} | modified | size (bytes)")
                 print(f"------------------------------------------")
-                try:
-                    for file in res["files"]:
-                        modified = datetime.datetime.fromtimestamp(
-                            float(file['last_modified']))
-                        print(
-                            f"{file['filename']:<16} | {f'{modified.hour:02}:{modified.minute:02}':<8} | {file['size']:<8}")
-                except:
-                    print("Unexpected error:", sys.exc_info()[0])
+                for file in res["files"]:
+                    modified = datetime.datetime.fromtimestamp(
+                        float(file['last_modified']))
+                    print(
+                        f"{file['filename']:<16} | {f'{modified.hour:02}:{modified.minute:02}':<8} | {file['size']:<8}")
         elif status == "ERR":  # assume all errors are just messages for now.
             print(f"{res}")
         elif cmd == "DISCONNECTED":
