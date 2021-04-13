@@ -3,6 +3,7 @@ import socket
 import json
 import sys
 import datetime
+from functools import reduce
 
 # IP = "192.168.1.101" #"localhost"
 IP = "localhost"
@@ -25,13 +26,15 @@ def main():
             elif cmd == "DIR":
                 # TODO: maybe change the way this is printed (more data, kb/mb instead of just bytes?)
                 res = json.loads(res)
-                print(f"{'filename':<16} | modified | size (bytes)")
-                print(f"------------------------------------------")
+                l = reduce(lambda a, c: max(
+                    a, len(c['name'])), res["files"], 0)
+                print(f"{'filename':<{l}} | modified | size (bytes)")
+                print('-'*(l + 26))
                 for file in res["files"]:
                     modified = datetime.datetime.fromtimestamp(
-                        float(file['last_modified']))
+                        file['last_modified'])
                     print(
-                        f"{file['filename']:<16} | {f'{modified.hour:02}:{modified.minute:02}':<8} | {file['size']:<8}")
+                        f"{file['name']:<{l}} | {f'{modified.hour:02}:{modified.minute:02}':<8} | {file['size']:<8}")
         elif status == "ERR":  # assume all errors are just messages for now.
             print(f"{res}")
         elif cmd == "DISCONNECTED":

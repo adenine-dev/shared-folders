@@ -52,13 +52,13 @@ def handle_client(conn, addr):
 
         elif cmd == "DIR":
             send_data = "OK@DIR@" + '{ "files": [' + \
-                ','.join(map(lambda f: '{' +
-                             '"filename": "' + f.name + '",' +
-                             '"dir": "' + str(f.is_dir()).lower() + '",' +
-                             '"last_modified": "' + str(f.stat().st_mtime).lower() + '",' +
-                             '"size": "' + str(f.stat().st_size).lower() + '"' +
-                             '}', [
-                                 name for name in os.scandir(SERVER_PATH)])) + "] }"
+                ','.join(map(lambda f: json.dumps({
+                    'name': f.name,
+                    'dir': f.is_dir(),
+                    'last_modified': f.stat().st_mtime,
+                    'size': f.stat().st_size
+                }), [
+                    name for name in os.scandir(SERVER_PATH)])) + "] }"
 
             conn.send(send_data.encode(FORMAT))
 
