@@ -23,7 +23,6 @@ def main():
 
     while True:
         if status == "OK":
-            print(data)
             if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END":
                 print(f"{res}")
 
@@ -49,7 +48,7 @@ def main():
                     fragment = file.read(1024 - 12)
 
                 file.close()
-                client.send("UPLOAD_END@".encode(FORMAT))
+                client.send("UPLOAD_END".encode(FORMAT))
 
                 data = client.recv(SIZE).decode(FORMAT)
                 status, cmd, res = data.split("@")
