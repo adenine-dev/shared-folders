@@ -18,9 +18,13 @@ def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
     conn.send("OK@CONNECT@Welcome to the server".encode(FORMAT))
 
+    active_filename = ""
+    active_file = None
+    active_command = ""
+
     while True:
         data = conn.recv(SIZE).decode(FORMAT)
-        data = data.split("@")
+        data = data.split("@", 1)
         cmd = data[0]
 
         send_data = ""
@@ -30,17 +34,47 @@ def handle_client(conn, addr):
 
         elif cmd == "CREATE":
             files = os.listdir(SERVER_PATH)
-            fileName = data[1]
+            filename = data[1]
 
-            if fileName in files:  # condition if file already exist in the server.
+            if filename in files:  # condition if file already exist in the server.
                 send_data = "ERR@CREATE@File exists."
             else:
                 buff = b""
-                with open(os.path.join(SERVER_PATH, fileName), 'wb') as temp_file:  # creating the file
+                with open(os.path.join(SERVER_PATH, filename), 'wb') as temp_file:  # creating the file
                     temp_file.write(buff)
                 send_data = "OK@CREATE@File created"
 
             conn.send(send_data.encode(FORMAT))
+
+        elif cmd == "UPLOAD":
+            filename = data[1]
+
+            if filename in os.listdir(SERVER_PATH):
+                send_data = "ERR@UPLOAD@File exists."
+            else:
+                active_filename = filename
+                active_file = open(os.path.join(
+                    SERVER_PATH, active_filename), 'w')
+
+                active_command = "UPLOAD"
+                send_data = f"OK@UPLOAD@{active_filename}"
+
+            conn.send(send_data.encode(FORMAT))
+
+        elif cmd == "UPLOAD_DATA":
+            if active_file and active_command == "UPLOAD":
+                active_file.write(data[1])
+
+        elif cmd == "UPLOAD_END":
+            if active_file and active_command == "UPLOAD":
+                active_file.close()
+                conn.send(
+                    f"OK@UPLOAD_END@Successfully uploaded file".encode(FORMAT))
+
+                print("done")
+                active_file = None
+                active_command = ""
+                active_filename = ""
 
         elif cmd == "DIR":
             send_data = "OK@DIR@" + '{ "files": [' + \

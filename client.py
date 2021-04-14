@@ -11,18 +11,22 @@ PORT = 4450
 ADDR = (IP, PORT)
 SIZE = 1024  # byte .. buffer size
 FORMAT = "utf-8"
-SERVER_DATA_PATH = "server_data"
+CLIENT_PATH = "client"
 
 
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
     data = client.recv(SIZE).decode(FORMAT)
+    # all responses are made up of status@command@data, status is always OK or ERR, command is always a command, and data is any string of data.
     status, cmd, res = data.split("@")
+
     while True:
         if status == "OK":
-            if cmd == "CREATE" or cmd == "DELETE":
+            print(data)
+            if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END":
                 print(f"{res}")
+
             elif cmd == "DIR":
                 # TODO: maybe change the way this is printed (more data, kb/mb instead of just bytes?)
                 res = json.loads(res)
@@ -35,11 +39,25 @@ def main():
                         file['last_modified'])
                     print(
                         f"{file['name']:<{l}} | {f'{modified.hour:02}:{modified.minute:02}':<8} | {file['size']:<8}")
+
+            elif cmd == "UPLOAD":
+                file = open(os.path.join(CLIENT_PATH, res))
+
+                fragment = file.read(1024 - 12)
+                while fragment:
+                    client.send(f"UPLOAD_DATA@{fragment}".encode(FORMAT))
+                    fragment = file.read(1024 - 12)
+
+                file.close()
+                client.send("UPLOAD_END@".encode(FORMAT))
+
+                data = client.recv(SIZE).decode(FORMAT)
+                status, cmd, res = data.split("@")
+
+                continue
+
         elif status == "ERR":  # assume all errors are just messages for now.
             print(f"{res}")
-        elif cmd == "DISCONNECTED":
-            print(f"{res}")
-            break
 
         data = input("> ")
         data = data.split(" ")
@@ -52,10 +70,18 @@ def main():
             client.send(cmd.encode(FORMAT))
             break
 
-        elif cmd == "CREATE":
-            # two words are separated by @ character.
-            print(f"{cmd}@{data[1]}")
-            client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+        # elif cmd == "CREATE":
+        #     print(f"{cmd}@{data[1]}")
+        #     client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+
+        elif cmd == "UPLOAD":
+            try:
+                if data[1] in os.listdir(CLIENT_PATH):
+                    client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+                else:
+                    print("File does not exist.")
+            except:
+                print(sys.exc_info()[0])
 
         elif cmd == "DIR":
             client.send(cmd.encode(FORMAT))
