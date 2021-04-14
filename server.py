@@ -1,10 +1,9 @@
-
-# Author : Ayesha S. Dina
-
 import os
 import socket
 import threading
 import json
+import sys
+
 
 IP = "localhost"  # 192.168.1.101
 PORT = 4450
@@ -29,13 +28,6 @@ def handle_client(conn, addr):
         if cmd == "LOGOUT":
             break
 
-        # elif cmd == "TASK":
-        #     send_data += "LOGOUT from the server.\n"
-        #     send_data += "CREATING new file on the server.\n"
-        #     send_data += "MULTITHREADING: handling multiple clients.\n"
-
-        #     conn.send(send_data.encode(FORMAT))
-
         elif cmd == "CREATE":
             files = os.listdir(SERVER_PATH)
             fileName = data[1]
@@ -59,6 +51,22 @@ def handle_client(conn, addr):
                     'size': f.stat().st_size
                 }), [
                     name for name in os.scandir(SERVER_PATH)])) + "] }"
+
+            conn.send(send_data.encode(FORMAT))
+
+        elif cmd == "DELETE":
+            files = os.listdir(SERVER_PATH)
+            filename = data[1]
+
+            if filename not in files:  # condition if file already exist in the server.
+                send_data = f"ERR@DELETE@{filename} does not exist."
+            else:
+                try:
+                    os.remove(os.path.join(SERVER_PATH, filename))
+                    send_data = f"OK@DELETE@{filename} deleted successfully"
+                except:
+                    print(sys.exc_info()[0])
+                    send_data = f"ERR@DELETE@{filename} failed to be deleted."
 
             conn.send(send_data.encode(FORMAT))
 

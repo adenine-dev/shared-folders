@@ -19,9 +19,9 @@ def main():
     client.connect(ADDR)
     data = client.recv(SIZE).decode(FORMAT)
     status, cmd, res = data.split("@")
-    while True:  # multiple communications
+    while True:
         if status == "OK":
-            if cmd == "CREATE":
+            if cmd == "CREATE" or cmd == "DELETE":
                 print(f"{res}")
             elif cmd == "DIR":
                 # TODO: maybe change the way this is printed (more data, kb/mb instead of just bytes?)
@@ -59,6 +59,10 @@ def main():
 
         elif cmd == "DIR":
             client.send(cmd.encode(FORMAT))
+
+        elif cmd == "DELETE":
+            client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+
         else:
             print("invalid command")
             continue
@@ -72,4 +76,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    input()
