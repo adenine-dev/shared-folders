@@ -5,8 +5,7 @@ import sys
 import datetime
 from functools import reduce
 
-# IP = "192.168.1.101" #    "localhost"
-IP = "localhost"
+IP = "localhost"  # 192.168.1.101
 PORT = 4450
 ADDR = (IP, PORT)
 SIZE = 1024  # byte .. buffer size
@@ -19,17 +18,14 @@ def main():
     client.connect(ADDR)
     data = client.recv(SIZE).decode(FORMAT)
     # all responses are made up of status@command@data, status is always OK or ERR, command is always a command, and data is any string of data.
-    status, cmd, res = data.split("@")
+    status, cmd, res = data.split("@", 3)
 
     while True:
         data = input("> ")
         data = data.split(" ")
         cmd = data[0].upper()
 
-        if cmd == "TASK":
-            client.send(cmd.encode(FORMAT))
-
-        elif cmd == "LOGOUT":
+        if cmd == "LOGOUT":
             client.send(cmd.encode(FORMAT))
             break
 
