@@ -5,7 +5,7 @@ import sys
 import datetime
 from functools import reduce
 
-# IP = "192.168.1.101" #"localhost"
+# IP = "192.168.1.101" #    "localhost"
 IP = "localhost"
 PORT = 4450
 ADDR = (IP, PORT)
@@ -22,6 +22,45 @@ def main():
     status, cmd, res = data.split("@")
 
     while True:
+        data = input("> ")
+        data = data.split(" ")
+        cmd = data[0].upper()
+
+        if cmd == "TASK":
+            client.send(cmd.encode(FORMAT))
+
+        elif cmd == "LOGOUT":
+            client.send(cmd.encode(FORMAT))
+            break
+
+        # elif cmd == "CREATE":
+        #     print(f"{cmd}@{data[1]}")
+        #     client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+
+        elif cmd == "UPLOAD":
+            try:
+                if data[1] in os.listdir(CLIENT_PATH):
+                    client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+                else:
+                    print("File does not exist.")
+            except:
+                print(sys.exc_info()[0])
+
+        elif cmd == "DIR":
+            client.send(cmd.encode(FORMAT))
+
+        elif cmd == "DELETE":
+            if len(data) == 2:
+                client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+            else:
+                print("invalid command syntax, DELETE file")
+                continue
+        else:
+            print("invalid command")
+            continue
+
+        data = client.recv(SIZE).decode(FORMAT)
+        status, cmd, res = data.split("@")
         if status == "OK":
             if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END":
                 print(f"{res}")
@@ -57,43 +96,6 @@ def main():
 
         elif status == "ERR":  # assume all errors are just messages for now.
             print(f"{res}")
-
-        data = input("> ")
-        data = data.split(" ")
-        cmd = data[0].upper()
-
-        if cmd == "TASK":
-            client.send(cmd.encode(FORMAT))
-
-        elif cmd == "LOGOUT":
-            client.send(cmd.encode(FORMAT))
-            break
-
-        # elif cmd == "CREATE":
-        #     print(f"{cmd}@{data[1]}")
-        #     client.send(f"{cmd}@{data[1]}".encode(FORMAT))
-
-        elif cmd == "UPLOAD":
-            try:
-                if data[1] in os.listdir(CLIENT_PATH):
-                    client.send(f"{cmd}@{data[1]}".encode(FORMAT))
-                else:
-                    print("File does not exist.")
-            except:
-                print(sys.exc_info()[0])
-
-        elif cmd == "DIR":
-            client.send(cmd.encode(FORMAT))
-
-        elif cmd == "DELETE":
-            client.send(f"{cmd}@{data[1]}".encode(FORMAT))
-
-        else:
-            print("invalid command")
-            continue
-
-        data = client.recv(SIZE).decode(FORMAT)
-        status, cmd, res = data.split("@")
 
     print("Disconnected from the server.")
     client.close()  # close the connection
