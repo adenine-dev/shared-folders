@@ -50,7 +50,7 @@ def main():
             client.send(cmd.encode(FORMAT))
 
         elif cmd == "DELETE":
-            if len(data) == 2:
+            if len(data) == 2 and data[1] != "":
                 client.send(f"{cmd}@{data[1]}".encode(FORMAT))
             else:
                 print("invalid command syntax, DELETE file")
