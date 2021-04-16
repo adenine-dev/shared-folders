@@ -12,30 +12,44 @@ SIZE = 1024  # byte .. buffer size
 FORMAT = "utf-8"
 CLIENT_PATH = "client"
 
+LOGIN = "admin"
+PASS = "admin"
 
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
     data = client.recv(SIZE).decode(FORMAT)
+    status, cmd, res = data.split("@", 3)
+    if status == "ERR":
+        print("Connection failed.")
+
+    client.send(f"{LOGIN}@{PASS}".encode(FORMAT))
+
+    data = client.recv(SIZE).decode(FORMAT)
     # all responses are made up of status@command@data, status is always OK or ERR, command is always a command, and data is any string of data.
     status, cmd, res = data.split("@", 3)
-    loggedIn = True
+    
+    if status == "ERR":
+        print("Server login failed.")
+        loggedIn = False
+    else:
+        loggedIn = True
 
     while True:
         data = input("> ")
         data = data.split(" ")
         cmd = data[0].upper()
 
-        if cmd == "LOGOUT":
-            client.send(cmd.encode(FORMAT))
-            loggedIn = False
-
         # elif cmd == "CREATE":
         #     print(f"{cmd}@{data[1]}")
         #     client.send(f"{cmd}@{data[1]}".encode(FORMAT))
 
         if loggedIn == True:
-            if cmd == "UPLOAD":
+            if cmd == "LOGOUT":
+                client.send(cmd.encode(FORMAT))
+                loggedIn = False
+                print ("Disconnected from the server.")
+            elif cmd == "UPLOAD":
                 try:
                     if data[1] in os.listdir(CLIENT_PATH):
                         client.send(f"{cmd}@{data[1]}".encode(FORMAT))
@@ -61,6 +75,10 @@ def main():
                 continue
             if cmd == "CONNECT":
 
+                if len(data) != 3 or data[1] == "" or data[2] == "":
+                    print("Invalid use of command.")
+                    continue
+
                 ip = data[1]
                 try:
                     port = (int(data[2]))
@@ -72,12 +90,34 @@ def main():
                 try:
                     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     client.connect(addr)
+
                     data = client.recv(SIZE).decode(FORMAT)
-                    loggedIn = True
-                    continue
+                    status, cmd, res = data.split("@", 3)
+                    
+                    if status == "OK":
+                        login = input("Login: ")
+                        password = input("Password: ")
+
+                        client.send(f"{login}@{password}".encode(FORMAT))
+                        data = client.recv(SIZE).decode(FORMAT)
+                        status, cmd, res = data.split("@", 3)
+
+                        if status == "ERR":
+                            print("Server login failed.")
+                            loggedIn = False
+                        else:
+                            loggedIn = True
+                        continue
+
+                    else:
+                        print("Server Connection Failed.")
+                        continue
+
                 except:
                     print("Connection Failed, please try again.")
                     loggedIn = False
+                    continue
+
             else:
                 print("You must be connected to a server to preform this action.")
                 continue
@@ -122,7 +162,6 @@ def main():
         elif status == "ERR":  # assume all errors are just messages for now.
             print(f"{res}")
 
-    print("Disconnected from the server.")
     client.close()  # close the connection
 
 

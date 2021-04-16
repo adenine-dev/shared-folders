@@ -12,11 +12,25 @@ SIZE = 1024
 FORMAT = "utf-8"
 SERVER_PATH = "server"
 
+LOGIN = "admin"
+PASS = "admin"
 
 def handle_client(conn, addr):
 
-    print(f"[NEW CONNECTION] {addr} connected.")
-    conn.send("OK@CONNECT@Welcome to the server".encode(FORMAT))
+    print(f"[NEW CONNECTION] {addr} is attempting to connect.")
+    conn.send("OK@CONNECT@SUCCEED!".encode(FORMAT))
+
+    data = conn.recv(SIZE).decode(FORMAT)
+    data = data.split("@", 1)
+    login = data[0]
+    password = data[1]
+    if login == LOGIN and password == PASS:
+        print(f"[NEW CONNECTION] {addr} connected.")
+        conn.send("OK@CONNECT@Welcome to the server".encode(FORMAT))
+    else:
+        conn.send("ERR@CONNECT@Welcome to the server".encode(FORMAT))
+        print(f"[FAILED CONNECTION] {addr} login/password refused.")
+        conn.close()
 
     active_filename = ""
     active_file = None
