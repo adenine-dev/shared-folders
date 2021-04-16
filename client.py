@@ -19,6 +19,7 @@ def main():
     data = client.recv(SIZE).decode(FORMAT)
     # all responses are made up of status@command@data, status is always OK or ERR, command is always a command, and data is any string of data.
     status, cmd, res = data.split("@", 3)
+    loggedIn = True
 
     while True:
         data = input("> ")
@@ -27,68 +28,96 @@ def main():
 
         if cmd == "LOGOUT":
             client.send(cmd.encode(FORMAT))
-            break
+            loggedIn = False
 
         # elif cmd == "CREATE":
         #     print(f"{cmd}@{data[1]}")
         #     client.send(f"{cmd}@{data[1]}".encode(FORMAT))
 
-        elif cmd == "UPLOAD":
-            try:
-                if data[1] in os.listdir(CLIENT_PATH):
-                    client.send(f"{cmd}@{data[1]}".encode(FORMAT))
-                else:
-                    print("File does not exist.")
-            except:
-                print(sys.exc_info()[0])
-
-        elif cmd == "DIR":
-            client.send(cmd.encode(FORMAT))
-
-        elif cmd == "DELETE":
-            if len(data) == 2 and data[1] != "":
-                client.send(f"{cmd}@{data[1]}".encode(FORMAT))
-            else:
-                print("invalid command syntax, DELETE file")
-                continue
-        else:
-            print("invalid command")
-            continue
-
-        data = client.recv(SIZE).decode(FORMAT)
-        status, cmd, res = data.split("@")
-        if status == "OK":
-            if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END":
-                print(f"{res}")
+        if loggedIn == True:
+            if cmd == "UPLOAD":
+                try:
+                    if data[1] in os.listdir(CLIENT_PATH):
+                        client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+                    else:
+                        print("File does not exist.")
+                except:
+                    print(sys.exc_info()[0])
 
             elif cmd == "DIR":
-                # TODO: maybe change the way this is printed (more data, kb/mb instead of just bytes?)
-                res = json.loads(res)
-                l = reduce(lambda a, c: max(
-                    a, len(c['name'])), res["files"], 0)
-                print(f"{'filename':<{l}} | modified | size (bytes)")
-                print('-'*(l + 26))
-                for file in res["files"]:
-                    modified = datetime.datetime.fromtimestamp(
-                        file['last_modified'])
-                    print(
-                        f"{file['name']:<{l}} | {f'{modified.hour:02}:{modified.minute:02}':<8} | {file['size']:<8}")
+                client.send(cmd.encode(FORMAT))
 
-            elif cmd == "UPLOAD":
-                file = open(os.path.join(CLIENT_PATH, res))
-
-                fragment = file.read(1024 - 12)
-                while fragment:
-                    client.send(f"UPLOAD_DATA@{fragment}".encode(FORMAT))
-                    fragment = file.read(1024 - 12)
-
-                file.close()
-                client.send("UPLOAD_END".encode(FORMAT))
-
-                data = client.recv(SIZE).decode(FORMAT)
-                status, cmd, res = data.split("@")
-
+            elif cmd == "DELETE":
+                if len(data) == 2 and data[1] != "":
+                    client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+                else:
+                    print("invalid command syntax, DELETE file")
+                    continue
+            else:
+                print("invalid command")
                 continue
+        else:
+            if cmd == "LOGOUT":
+                continue
+            if cmd == "CONNECT":
+
+                ip = data[1]
+                try:
+                    port = (int(data[2]))
+                except:
+                    print("Invalid Port")
+                    continue
+                addr = (ip, port)
+
+                try:
+                    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    client.connect(addr)
+                    data = client.recv(SIZE).decode(FORMAT)
+                    loggedIn = True
+                    continue
+                except:
+                    print("Connection Failed, please try again.")
+                    loggedIn = False
+            else:
+                print("You must be connected to a server to preform this action.")
+                continue
+
+
+        if loggedIn == True:
+            data = client.recv(SIZE).decode(FORMAT)
+            status, cmd, res = data.split("@")
+            if status == "OK":
+                if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END":
+                    print(f"{res}")
+
+                elif cmd == "DIR":
+                    # TODO: maybe change the way this is printed (more data, kb/mb instead of just bytes?)
+                    res = json.loads(res)
+                    l = reduce(lambda a, c: max(
+                        a, len(c['name'])), res["files"], 0)
+                    print(f"{'filename':<{l}} | modified | size (bytes)")
+                    print('-'*(l + 26))
+                    for file in res["files"]:
+                        modified = datetime.datetime.fromtimestamp(
+                            file['last_modified'])
+                        print(
+                            f"{file['name']:<{l}} | {f'{modified.hour:02}:{modified.minute:02}':<8} | {file['size']:<8}")
+
+                elif cmd == "UPLOAD":
+                    file = open(os.path.join(CLIENT_PATH, res))
+
+                    fragment = file.read(1024 - 12)
+                    while fragment:
+                        client.send(f"UPLOAD_DATA@{fragment}".encode(FORMAT))
+                        fragment = file.read(1024 - 12)
+
+                    file.close()
+                    client.send("UPLOAD_END".encode(FORMAT))
+
+                    data = client.recv(SIZE).decode(FORMAT)
+                    status, cmd, res = data.split("@")
+
+                    continue
 
         elif status == "ERR":  # assume all errors are just messages for now.
             print(f"{res}")
