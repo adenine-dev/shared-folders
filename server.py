@@ -26,10 +26,10 @@ def handle_client(conn, addr):
     login = data[0]
     password = data[1]
     if login == LOGIN and password == PASS:
-        print(f"[NEW CONNECTION] {addr} connected.")
+        print(f"[NEW CONNECTION] {addr} logged in successfully.")
         conn.send("OK@CONNECT@Welcome to the server".encode(FORMAT))
     else:
-        conn.send("ERR@CONNECT@Welcome to the server".encode(FORMAT))
+        conn.send("ERR@CONNECT@LoginFailed".encode(FORMAT))
         print(f"[FAILED CONNECTION] {addr} login/password refused.")
         conn.close()
 
@@ -137,7 +137,7 @@ def handle_client(conn, addr):
 
             conn.send(send_data.encode(FORMAT))
 
-    print(f"{addr} disconnected")
+    print(f"[LOST CONNECTION] {addr} disconnected from the server.")
     conn.close()
 
 
@@ -147,7 +147,7 @@ def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(ADDR)  # bind the address
     server.listen()  # start listening
-    print(f"server is listening on {IP}: {PORT}")
+    print(f"Server is listening on {IP}: {PORT}")
     while True:
         conn, addr = server.accept()  # accept a connection from a client
         thread = threading.Thread(target=handle_client, args=(
