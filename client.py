@@ -42,6 +42,9 @@ def main():
             except:
                 print(sys.exc_info()[0])
 
+        elif cmd == "DOWNLOAD":
+            client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+
         elif cmd == "DIR":
             client.send(cmd.encode(FORMAT))
 
@@ -56,7 +59,8 @@ def main():
             continue
 
         data = client.recv(SIZE).decode(FORMAT)
-        status, cmd, res = data.split("@")
+        status, cmd, res = data.split("@", 3)
+
         if status == "OK":
             if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END":
                 print(f"{res}")
@@ -88,6 +92,25 @@ def main():
                 data = client.recv(SIZE).decode(FORMAT)
                 status, cmd, res = data.split("@")
 
+                continue
+
+            elif cmd == "DOWNLOAD":
+                f = None
+                if res in os.listdir(CLIENT_PATH):
+                    f = open(os.path.join(CLIENT_PATH, res), "w")
+                else:
+                    f = open(os.path.join(CLIENT_PATH, res), "x")
+
+                data = client.recv(SIZE).decode(FORMAT)
+                cmd, res = data.split("@")
+                while cmd != "DOWNLOAD_END":
+                    f.write(res)
+                    f.seek(0, 2)
+                    client.send("OK".encode(FORMAT))
+                    data = client.recv(SIZE).decode(FORMAT)
+                    cmd, res = data.split("@", 1)
+
+                f.close()
                 continue
 
         elif status == "ERR":  # assume all errors are just messages for now.

@@ -76,6 +76,25 @@ def handle_client(conn, addr):
                 active_command = ""
                 active_filename = ""
 
+        elif cmd == "DOWNLOAD":
+            filename = data[1]
+
+            if filename not in os.listdir(SERVER_PATH):
+                conn.send("ERR@DOWNLOAD@File does not exist.".encode(FORMAT))
+            else:
+                conn.send(f"OK@DOWNLOAD@{filename}".encode(FORMAT))
+
+                file = open(os.path.join(SERVER_PATH, filename))
+                fragment = file.read(SIZE - 14)
+                while fragment:
+                    print(fragment)
+                    conn.send(f"DOWNLOAD_DATA@{fragment}".encode(FORMAT))
+                    fragment = file.read(SIZE - 14)
+                    data = conn.recv(SIZE).decode(FORMAT)
+
+                file.close()
+                conn.send("DOWNLOAD_END@".encode(FORMAT))
+
         elif cmd == "DIR":
             send_data = "OK@DIR@" + '{ "files": [' + \
                 ','.join(map(lambda f: json.dumps({
