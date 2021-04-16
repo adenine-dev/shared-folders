@@ -20,7 +20,8 @@
         {
             "label": "build_mac",
             "type": "process",
-            "command": "run.sh",
+            "command": "sh",
+            "args": ["run.sh"],
             "options": {
                 "cwd": "${workspaceFolder}",
             },
