@@ -110,7 +110,6 @@ def handle_client(conn, addr):
                 conn.send("DOWNLOAD_END@".encode(FORMAT))
 
         elif cmd == "DIR":
-            print("sucks")
             send_data = "OK@DIR@" + '{ "files": [' + \
                ','.join(map(lambda f: json.dumps({
                     'name': f.name,
