@@ -111,16 +111,16 @@ def handle_client(conn, addr):
 
         elif cmd == "DIR":
             print("sucks")
-            #send_data = "OK@DIR@" + '{ "files": [' + \
-            #   ','.join(map(lambda f: json.dumps({
-             #       'name': f.name,
-             #       'dir': f.is_dir(),
-            #        'last_modified': f.stat().st_mtime,
-            #        'size': f.stat().st_size
-            #    }), [
-            #        name for name in os.scandir(SERVER_PATH)])) + "] }"
+            send_data = "OK@DIR@" + '{ "files": [' + \
+               ','.join(map(lambda f: json.dumps({
+                    'name': f.name,
+                    'dir': f.is_dir(),
+                    'last_modified': f.stat().st_mtime,
+                    'size': f.stat().st_size
+                }), [
+                    name for name in os.scandir(SERVER_PATH)])) + "] }"
 
-            #conn.send(send_data.encode(FORMAT))
+            conn.send(send_data.encode(FORMAT))
 
         elif cmd == "DELETE":
             files = os.listdir(SERVER_PATH)
