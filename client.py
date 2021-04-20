@@ -18,7 +18,16 @@ PASS = "admin"
 
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(ADDR)
+    client.settimeout(1)
+    try:
+        client.connect(ADDR)
+    except socket.timeout:
+        print("Socket Timeout.")
+        return
+    except:
+        print("Connection Error.")
+        return
+
     data = client.recv(SIZE).decode(FORMAT)
     status, cmd, res = data.split("@", 3)
     if status == "ERR":
@@ -127,7 +136,11 @@ def main():
                 continue
 
         if loggedIn == True:
-            data = client.recv(SIZE).decode(FORMAT)
+            try:
+                data = client.recv(SIZE).decode(FORMAT)
+            except socket.timeout:
+                print("Connection timed out.")
+                continue
             print("131", data)
             status, cmd, res = data.split("@", 2)
             if status == "OK":
