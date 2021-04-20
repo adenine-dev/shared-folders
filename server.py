@@ -143,7 +143,7 @@ def handle_client(conn, addr):
             files = os.listdir(os.path.join(SERVER_PATH, cwd))
             foldername = data[1]
 
-            if foldername in files:
+            if foldername in files or not os.path.join(SERVER_PATH, cwd, foldername):
                 send_data = "ERR@MKDIR@Folder already exists."
             else:
                 buff = b""
