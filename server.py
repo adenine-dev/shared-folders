@@ -37,6 +37,8 @@ def handle_client(conn, addr):
     active_file = None
     active_command = ""
 
+    cwd = ""
+
     while True:
         data = conn.recv(SIZE).decode(FORMAT)
         data = data.split("@", 1)
@@ -137,6 +139,18 @@ def handle_client(conn, addr):
 
             conn.send(send_data.encode(FORMAT))
 
+        elif cmd == "MKDIR":
+            files = os.listdir(os.path.join(SERVER_PATH, cwd))
+            foldername = data[1]
+
+            if foldername in files:
+                send_data = "ERR@MKDIR@Folder already exists."
+            else:
+                buff = b""
+                os.mkdir(os.path.join(SERVER_PATH, cwd, foldername))
+                send_data = f"OK@MKDIR@{foldername} created."
+
+            conn.send(send_data.encode(FORMAT))
     print(f"[LOST CONNECTION] {addr} disconnected from the server.")
     conn.close()
 

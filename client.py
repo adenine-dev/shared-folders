@@ -19,6 +19,7 @@ PASS = "admin"
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
+    client.settimeout(10)
     data = client.recv(SIZE).decode(FORMAT)
     status, cmd, res = data.split("@", 3)
     if status == "ERR":
@@ -30,6 +31,8 @@ def main():
     # all responses are made up of status@command@data, status is always OK or ERR, command is always a command, and data is any string of data.
     status, cmd, res = data.split("@", 3)
 
+    cwd = ""
+
     if status == "ERR":
         print("Server login failed.")
         loggedIn = False
@@ -37,7 +40,7 @@ def main():
         loggedIn = True
 
     while True:
-        data = input("> ")
+        data = input(f"HOME/{cwd} > ")
         data = data.split(" ")
         cmd = data[0].upper()
 
@@ -65,11 +68,12 @@ def main():
             elif cmd == "DIR":
                 client.send(cmd.encode(FORMAT))
 
-            elif cmd == "DELETE":
+            # All of these commands produce practically the same result, insofar as they will send the same structure of data to the server.
+            elif cmd == "DELETE" or cmd == "MKDIR" or cmd == "CD" or cmd == "RMDIR":
                 if len(data) == 2 and data[1] != "":
                     client.send(f"{cmd}@{data[1]}".encode(FORMAT))
                 else:
-                    print("invalid command syntax, DELETE file")
+                    print(f"invalid command syntax, {cmd} file")
                     continue
             else:
                 print("invalid command")
@@ -131,7 +135,7 @@ def main():
             print("131", data)
             status, cmd, res = data.split("@", 2)
             if status == "OK":
-                if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END":
+                if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END" or cmd == "MKDIR" or cmd == "RMDIR" or cmd == "CD":
                     print(f"{res}")
 
                 elif cmd == "DIR":
