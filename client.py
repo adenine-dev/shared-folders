@@ -132,7 +132,6 @@ def main():
 
         if loggedIn == True:
             data = client.recv(SIZE).decode(FORMAT)
-            print("131", data)
             status, cmd, res = data.split("@", 2)
             if status == "OK":
                 if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END" or cmd == "MKDIR" or cmd == "RMDIR" or cmd == "CD":
@@ -186,8 +185,8 @@ def main():
                     f.close()
                     # continue
 
-        elif status == "ERR":  # assume all errors are just messages for now.
-            print(f"{res}")
+            elif status == "ERR":  # assume all errors are just messages for now.
+                print(f"{res}")
 
     client.close()  # close the connection
 

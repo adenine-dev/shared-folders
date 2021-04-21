@@ -140,17 +140,60 @@ def handle_client(conn, addr):
             conn.send(send_data.encode(FORMAT))
 
         elif cmd == "MKDIR":
-            files = os.listdir(os.path.join(SERVER_PATH, cwd))
-            foldername = data[1]
+            foldername = data[1].rstrip("./\\").lstrip("./\\")
 
-            if foldername in files or not os.path.join(SERVER_PATH, cwd, foldername):
-                send_data = "ERR@MKDIR@Folder already exists."
+            if ".." in foldername or "/" in foldername or "\\" in foldername:
+                send_data = "ERR@MKDIR@Invalid path name."
             else:
-                buff = b""
-                os.mkdir(os.path.join(SERVER_PATH, cwd, foldername))
-                send_data = f"OK@MKDIR@{foldername} created."
+                files = os.listdir(os.path.join(SERVER_PATH, cwd))
+                if foldername in files:
+                    send_data = "ERR@MKDIR@Folder already exists."
+                else:
+                    os.mkdir(os.path.join(SERVER_PATH, cwd, foldername))
+                    send_data = f"OK@MKDIR@{foldername} created."
 
             conn.send(send_data.encode(FORMAT))
+
+        elif cmd == "RMDIR":
+            foldername = data[1].rstrip("/\\").lstrip("/\\")
+
+            if ".." in foldername or "/" in foldername or "\\" in foldername:
+                send_data = "ERR@RMDIR@Invalid path name."
+            else:
+                files = os.listdir(os.path.join(SERVER_PATH, cwd))
+                if foldername not in files:
+                    send_data = "ERR@RMDIR@Folder does not exist."
+                elif os.path.isfile(os.path.join(SERVER_PATH, cwd, foldername)):
+                    send_data = "ERR@RMDIR@File is not a folder."
+                else:
+                    try:
+                        os.rmdir(os.path.join(SERVER_PATH, cwd, foldername))
+                        send_data = f"OK@RMDIR@{foldername} deleted."
+                    except OSError:
+                        send_data = f"ERR@RMDIR@Folder not empty."
+
+            conn.send(send_data.encode(FORMAT))
+
+        elif cmd == "CD":
+            foldername = data[1].rstrip("/\\").lstrip("/\\")
+
+            if ".." in foldername or "/" in foldername or "\\" in foldername:
+                send_data = "ERR@RMDIR@Invalid path name."
+            else:
+                files = os.listdir(os.path.join(SERVER_PATH, cwd))
+                if foldername not in files:
+                    send_data = "ERR@RMDIR@Folder does not exist."
+                elif os.path.isfile(os.path.join(SERVER_PATH, cwd, foldername)):
+                    send_data = "ERR@RMDIR@File is not a folder."
+                else:
+                    try:
+                        os.rmdir(os.path.join(SERVER_PATH, cwd, foldername))
+                        send_data = f"OK@RMDIR@{foldername} deleted."
+                    except OSError:
+                        send_data = f"ERR@RMDIR@Folder not empty."
+
+            conn.send(send_data.encode(FORMAT))
+
     print(f"[LOST CONNECTION] {addr} disconnected from the server.")
     conn.close()
 
