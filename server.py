@@ -117,7 +117,7 @@ def handle_client(conn, addr):
 
         elif cmd == "DIR":
             send_data = "OK@DIR@" + '{ "files": [' + \
-                ','.join(map(lambda f: json.dumps({
+               ','.join(map(lambda f: json.dumps({
                     'name': f.name,
                     'dir': f.is_dir(),
                     'last_modified': f.stat().st_mtime,
