@@ -33,9 +33,6 @@ def handle_client(conn, addr):
         print(f"[FAILED CONNECTION] {addr} login/password refused.")
         conn.close()
 
-    active_file = None
-    active_command = ""
-
     cwd = SERVER_PATH
 
     while True:
@@ -65,6 +62,7 @@ def handle_client(conn, addr):
         elif cmd == "UPLOAD":
             filename = data[1]
 
+            active_file = None
             if filename in os.listdir(os.path.join(cwd)):
                 active_file = open(os.path.join(
                     cwd, filename), "wb")
@@ -93,10 +91,6 @@ def handle_client(conn, addr):
             conn.send(
                 f"OK@UPLOAD_END@Successfully uploaded file".encode(FORMAT))
 
-            active_file = None
-            active_command = ""
-            active_filename = ""
-
         elif cmd == "DOWNLOAD":
             filename = data[1]
 
@@ -115,18 +109,6 @@ def handle_client(conn, addr):
 
                 file.close()
                 conn.send("OK@DOWNLOAD_END".encode(FORMAT))
-
-                # conn.send(f"OK@DOWNLOAD@{filename}".encode(FORMAT))
-
-                # file = open(os.path.join(cwd, filename))
-                # fragment = file.read(SIZE - 14)
-                # while fragment:
-                #     conn.send(f"DOWNLOAD_DATA@{fragment}".encode(FORMAT))
-                #     fragment = file.read(SIZE - 14)
-                #     data = conn.recv(SIZE).decode(FORMAT)
-
-                # file.close()
-                # conn.send("DOWNLOAD_END@".encode(FORMAT))
 
         elif cmd == "DIR":
             send_data = "OK@DIR@" + '{ "files": [' + \

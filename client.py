@@ -2,7 +2,7 @@ import os
 import socket
 import json
 import sys
-import datetime
+from datetime import datetime
 from functools import reduce
 
 IP = "localhost"  # 192.168.1.101
@@ -17,21 +17,28 @@ PASS = "admin"
 
 
 def main():
+    start_time = None
+    end_time = None
+    log_file = open(f"client_log_{datetime.now().timestamp()}", "w")
+
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.settimeout(10)
     try:
         client.connect(ADDR)
     except socket.timeout:
         print("Socket Timeout.")
+        log_file.write(f"[{datetime.now()}] Socket timed out\n")
         return
     except:
         print("Connection Error.")
+        log_file.write(f"[{datetime.now()}] Connection Error\n")
         return
 
     data = client.recv(SIZE).decode(FORMAT)
     status, cmd, res = data.split("@", 3)
     if status == "ERR":
         print("Connection failed.")
+        log_file.write(f"[{datetime.now()}] Connection Failed\n")
 
     client.send(f"{LOGIN}@{PASS}".encode(FORMAT))
 
@@ -49,8 +56,13 @@ def main():
 
     while True:
         data = input(f"SERVER/{cwd} > ")
+        start_time = datetime.now()
+        log_file.write(f"[{start_time}] `{data}` ")
+
         data = data.split(" ")
         cmd = data[0].upper()
+        if cmd == "QUIT":
+            break
 
         if loggedIn == True:
             if cmd == "LOGOUT":
@@ -83,6 +95,8 @@ def main():
                     continue
             else:
                 print("invalid command")
+                log_file.write(f"-> INVALID\n")
+
                 continue
         else:
             if cmd == "LOGOUT":
@@ -143,6 +157,7 @@ def main():
                 print("Socket timed out.")
                 continue
             status, cmd, res = data.split("@", 2)
+
             if status == "OK":
                 if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END" or cmd == "MKDIR" or cmd == "RMDIR":
                     print(f"{res}")
@@ -158,13 +173,15 @@ def main():
                     res = json.loads(res)
                     l = reduce(lambda a, c: max(
                         a, len(c['name'])), res["files"], 0)
-                    print(f"{'filename':<{l}} | modified | size (bytes)")
-                    print('-'*(l + 26))
+                    print(f"{'filename':<{l}} | {'modified':<{16}} | size (bytes)")
+                    print('-'*(l + 34))
                     for file in res["files"]:
-                        modified = datetime.datetime.fromtimestamp(
+                        modified = datetime.fromtimestamp(
                             file['last_modified'])
                         print(
-                            f"{file['name']:<{l}} | {f'{modified.hour:02}:{modified.minute:02}':<8} | {file['size']:<8}")
+                            f"{file['name']:<{l}} | {f'{modified.day:02}/{modified.month:02}/{modified.year:04} {modified.hour:02}:{modified.minute:02}'} | {file['size']:<8}")
+
+                    end_time = datetime.now()
 
                 elif cmd == "UPLOAD":
                     file = open(os.path.join(CLIENT_PATH, cwd, res), "rb")
@@ -179,8 +196,6 @@ def main():
 
                     data = client.recv(SIZE).decode(FORMAT)
                     status, cmd, res = data.split("@")
-
-                    continue
 
                 elif cmd == "DOWNLOAD":
                     active_file = None
@@ -214,11 +229,16 @@ def main():
                     active_file.close()
 
                     print("file downloaded successfully")
-                    continue
+                    # continue
             elif status == "ERR":  # assume all errors are just messages for now.
                 print(f"{res}")
 
+            end_time = datetime.now()
+            log_file.write(
+                f"-> {status} (duration: {end_time - start_time}) [{end_time}]\n")
+
     client.close()  # close the connection
+    log_file.close()
 
 
 if __name__ == "__main__":
