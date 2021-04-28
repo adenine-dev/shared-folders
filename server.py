@@ -37,7 +37,7 @@ def handle_client(conn, addr):
     active_file = None
     active_command = ""
 
-    cwd = ""
+    cwd = SERVER_PATH
 
     while True:
         data = conn.recv(SIZE).decode(FORMAT)
@@ -50,14 +50,14 @@ def handle_client(conn, addr):
             break
 
         elif cmd == "CREATE":
-            files = os.listdir(SERVER_PATH)
+            files = os.listdir(cwd)
             filename = data[1]
 
             if filename in files:  # condition if file already exist in the server.
                 send_data = "ERR@CREATE@File exists."
             else:
                 buff = b""
-                with open(os.path.join(SERVER_PATH, filename), 'wb') as temp_file:  # creating the file
+                with open(os.path.join(cwd, filename), 'wb') as temp_file:  # creating the file
                     temp_file.write(buff)
                 send_data = "OK@CREATE@File created"
 
@@ -66,12 +66,12 @@ def handle_client(conn, addr):
         elif cmd == "UPLOAD":
             filename = data[1]
 
-            if filename in os.listdir(SERVER_PATH):
+            if filename in os.listdir(cwd):
                 send_data = "ERR@UPLOAD@File exists."
             else:
                 active_filename = filename
                 active_file = open(os.path.join(
-                    SERVER_PATH, active_filename), 'w')
+                    cwd, active_filename), 'w')
 
                 active_command = "UPLOAD"
                 send_data = f"OK@UPLOAD@{active_filename}"
@@ -88,7 +88,6 @@ def handle_client(conn, addr):
                 conn.send(
                     f"OK@UPLOAD_END@Successfully uploaded file".encode(FORMAT))
 
-                print("done")
                 active_file = None
                 active_command = ""
                 active_filename = ""
@@ -96,12 +95,12 @@ def handle_client(conn, addr):
         elif cmd == "DOWNLOAD":
             filename = data[1]
 
-            if filename not in os.listdir(SERVER_PATH):
+            if filename not in os.listdir(cwd):
                 conn.send("ERR@DOWNLOAD@File does not exist.".encode(FORMAT))
             else:
                 conn.send(f"OK@DOWNLOAD@{filename}".encode(FORMAT))
 
-                file = open(os.path.join(SERVER_PATH, filename))
+                file = open(os.path.join(cwd, filename))
                 fragment = file.read(SIZE - 14)
                 while fragment:
                     conn.send(f"DOWNLOAD_DATA@{fragment}".encode(FORMAT))
@@ -119,22 +118,22 @@ def handle_client(conn, addr):
                     'last_modified': f.stat().st_mtime,
                     'size': f.stat().st_size
                 }), [
-                    name for name in os.scandir(SERVER_PATH)])) + "] }"
+                    name for name in os.scandir(cwd)])) + "] }"
 
             conn.send(send_data.encode(FORMAT))
 
         elif cmd == "DELETE":
-            files = os.listdir(SERVER_PATH)
+            files = os.listdir(cwd)
             filename = data[1]
 
             if filename not in files:  # condition if file already exist in the server.
                 send_data = f"ERR@DELETE@{filename} does not exist."
             else:
                 try:
-                    os.remove(os.path.join(SERVER_PATH, filename))
+                    os.remove(os.path.join(cwd, filename))
                     send_data = f"OK@DELETE@{filename} deleted successfully"
                 except:
-                    print(sys.exc_info()[0])
+                    # print(sys.exc_info()[0])
                     send_data = f"ERR@DELETE@{filename} failed to be deleted."
 
             conn.send(send_data.encode(FORMAT))
@@ -145,11 +144,11 @@ def handle_client(conn, addr):
             if ".." in foldername or "/" in foldername or "\\" in foldername:
                 send_data = "ERR@MKDIR@Invalid path name."
             else:
-                files = os.listdir(os.path.join(SERVER_PATH, cwd))
+                files = os.listdir(cwd)
                 if foldername in files:
                     send_data = "ERR@MKDIR@Folder already exists."
                 else:
-                    os.mkdir(os.path.join(SERVER_PATH, cwd, foldername))
+                    os.mkdir(os.path.join(cwd, foldername))
                     send_data = f"OK@MKDIR@{foldername} created."
 
             conn.send(send_data.encode(FORMAT))
@@ -160,14 +159,14 @@ def handle_client(conn, addr):
             if ".." in foldername or "/" in foldername or "\\" in foldername:
                 send_data = "ERR@RMDIR@Invalid path name."
             else:
-                files = os.listdir(os.path.join(SERVER_PATH, cwd))
+                files = os.listdir(cwd)
                 if foldername not in files:
                     send_data = "ERR@RMDIR@Folder does not exist."
-                elif os.path.isfile(os.path.join(SERVER_PATH, cwd, foldername)):
+                elif os.path.isfile(os.path.join(cwd, foldername)):
                     send_data = "ERR@RMDIR@File is not a folder."
                 else:
                     try:
-                        os.rmdir(os.path.join(SERVER_PATH, cwd, foldername))
+                        os.rmdir(os.path.join(cwd, foldername))
                         send_data = f"OK@RMDIR@{foldername} deleted."
                     except OSError:
                         send_data = f"ERR@RMDIR@Folder not empty."
@@ -177,20 +176,13 @@ def handle_client(conn, addr):
         elif cmd == "CD":
             foldername = data[1].rstrip("/\\").lstrip("/\\")
 
-            if ".." in foldername or "/" in foldername or "\\" in foldername:
-                send_data = "ERR@RMDIR@Invalid path name."
+            if os.path.abspath(os.path.join(cwd, foldername)).startswith(
+                    os.path.abspath(SERVER_PATH)):
+                cwd = os.path.normpath(os.path.join(cwd, foldername))
+                send_data = f"OK@CD@{os.path.relpath(cwd, SERVER_PATH)}"
+
             else:
-                files = os.listdir(os.path.join(SERVER_PATH, cwd))
-                if foldername not in files:
-                    send_data = "ERR@RMDIR@Folder does not exist."
-                elif os.path.isfile(os.path.join(SERVER_PATH, cwd, foldername)):
-                    send_data = "ERR@RMDIR@File is not a folder."
-                else:
-                    try:
-                        os.rmdir(os.path.join(SERVER_PATH, cwd, foldername))
-                        send_data = f"OK@RMDIR@{foldername} deleted."
-                    except OSError:
-                        send_data = f"ERR@RMDIR@Folder not empty."
+                send_data = f"ERR@CD@Path does not exist"
 
             conn.send(send_data.encode(FORMAT))
 

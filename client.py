@@ -40,7 +40,7 @@ def main():
         loggedIn = True
 
     while True:
-        data = input(f"HOME/{cwd} > ")
+        data = input(f"SERVER/{cwd} > ")
         data = data.split(" ")
         cmd = data[0].upper()
 
@@ -134,9 +134,14 @@ def main():
             data = client.recv(SIZE).decode(FORMAT)
             status, cmd, res = data.split("@", 2)
             if status == "OK":
-                if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END" or cmd == "MKDIR" or cmd == "RMDIR" or cmd == "CD":
+                if cmd == "CREATE" or cmd == "DELETE" or cmd == "UPLOAD_END" or cmd == "MKDIR" or cmd == "RMDIR":
                     print(f"{res}")
 
+                elif cmd == "CD":
+                    if res == ".":
+                        cwd = ""
+                    else:
+                        cwd = res.replace("\\", "/")
                 elif cmd == "DIR":
                     # TODO: maybe change the way this is printed (more data, kb/mb instead of just bytes?)
                     res = json.loads(res)
