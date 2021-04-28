@@ -52,15 +52,12 @@ def main():
         data = data.split(" ")
         cmd = data[0].upper()
 
-        # elif cmd == "CREATE":
-        #     print(f"{cmd}@{data[1]}")
-        #     client.send(f"{cmd}@{data[1]}".encode(FORMAT))
-
         if loggedIn == True:
             if cmd == "LOGOUT":
                 client.send(cmd.encode(FORMAT))
                 loggedIn = False
                 print("Disconnected from the server.")
+
             elif cmd == "UPLOAD":
                 try:
                     if data[1] in os.listdir(os.path.join(CLIENT_PATH, cwd)):
@@ -155,6 +152,7 @@ def main():
                         cwd = ""
                     else:
                         cwd = res.replace("\\", "/")
+
                 elif cmd == "DIR":
                     # TODO: maybe change the way this is printed (more data, kb/mb instead of just bytes?)
                     res = json.loads(res)
@@ -185,24 +183,38 @@ def main():
                     continue
 
                 elif cmd == "DOWNLOAD":
-                    f = None
+                    active_file = None
                     if res in os.listdir(os.path.join(CLIENT_PATH, cwd)):
-                        f = open(os.path.join(CLIENT_PATH, cwd, res), "w")
+                        active_file = open(os.path.join(
+                            CLIENT_PATH, cwd, res), "wb")
                     else:
-                        f = open(os.path.join(CLIENT_PATH, cwd, res), "x")
+                        active_file = open(os.path.join(
+                            CLIENT_PATH, cwd, res), "xb")
 
-                    data = client.recv(SIZE).decode(FORMAT)
-                    cmd, res = data.split("@")
-                    while cmd != "DOWNLOAD_END":
-                        f.write(res)
-                        f.seek(0, 2)  # seek to end of write
-                        client.send("OK".encode(FORMAT))
-                        data = client.recv(SIZE).decode(FORMAT)
-                        cmd, res = data.split("@", 1)
+                    while True:
+                        try:
+                            data = client.recv(SIZE)
+                        except socket.timeout:
+                            print("Socket timed out.")
+                            client.close()
+                            return
 
-                    f.close()
-                    # continue
+                        try:
+                            decoded = data.decode(FORMAT)
+                            cmd = decoded.rsplit("@", 1)[1]
+                            if cmd == "DOWNLOAD_END":
+                                if decoded.endswith("OK@DOWNLOAD_END") and len(decoded) > 15:
+                                    active_file.write(data[0:len(decoded)-15])
+                                break
+                            else:
+                                active_file.write(data)
+                        except:
+                            active_file.write(data)
 
+                    active_file.close()
+
+                    print("file downloaded successfully")
+                    continue
             elif status == "ERR":  # assume all errors are just messages for now.
                 print(f"{res}")
 

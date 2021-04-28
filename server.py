@@ -103,21 +103,34 @@ def handle_client(conn, addr):
             if filename not in os.listdir(cwd):
                 conn.send("ERR@DOWNLOAD@File does not exist.".encode(FORMAT))
             else:
-                conn.send(f"OK@DOWNLOAD@{filename}".encode(FORMAT))
+                conn.send(
+                    f"OK@DOWNLOAD@{filename}".encode(FORMAT))
 
-                file = open(os.path.join(cwd, filename))
-                fragment = file.read(SIZE - 14)
+                file = open(os.path.join(cwd, filename), "rb")
+
+                fragment = file.read(SIZE)
                 while fragment:
-                    conn.send(f"DOWNLOAD_DATA@{fragment}".encode(FORMAT))
-                    fragment = file.read(SIZE - 14)
-                    data = conn.recv(SIZE).decode(FORMAT)
+                    conn.send(fragment)
+                    fragment = file.read(SIZE)
 
                 file.close()
-                conn.send("DOWNLOAD_END@".encode(FORMAT))
+                conn.send("OK@DOWNLOAD_END".encode(FORMAT))
+
+                # conn.send(f"OK@DOWNLOAD@{filename}".encode(FORMAT))
+
+                # file = open(os.path.join(cwd, filename))
+                # fragment = file.read(SIZE - 14)
+                # while fragment:
+                #     conn.send(f"DOWNLOAD_DATA@{fragment}".encode(FORMAT))
+                #     fragment = file.read(SIZE - 14)
+                #     data = conn.recv(SIZE).decode(FORMAT)
+
+                # file.close()
+                # conn.send("DOWNLOAD_END@".encode(FORMAT))
 
         elif cmd == "DIR":
             send_data = "OK@DIR@" + '{ "files": [' + \
-               ','.join(map(lambda f: json.dumps({
+                ','.join(map(lambda f: json.dumps({
                     'name': f.name,
                     'dir': f.is_dir(),
                     'last_modified': f.stat().st_mtime,
