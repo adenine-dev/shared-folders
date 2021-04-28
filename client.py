@@ -55,10 +55,11 @@ def main():
                 print("Disconnected from the server.")
             elif cmd == "UPLOAD":
                 try:
-                    if data[1] in os.listdir(path.join(CLIENT_PATH, cwd)):
+                    if data[1] in os.listdir(os.path.join(CLIENT_PATH, cwd)):
                         client.send(f"{cmd}@{data[1]}".encode(FORMAT))
                     else:
                         print("File does not exist.")
+                        continue
                 except:
                     print(sys.exc_info()[0])
 
@@ -156,12 +157,12 @@ def main():
                             f"{file['name']:<{l}} | {f'{modified.hour:02}:{modified.minute:02}':<8} | {file['size']:<8}")
 
                 elif cmd == "UPLOAD":
-                    file = open(os.path.join(CLIENT_PATH, cwd, res))
+                    file = open(os.path.join(CLIENT_PATH, cwd, res), "rb")
 
-                    fragment = file.read(1024 - 12)
+                    fragment = file.read(1024)
                     while fragment:
-                        client.send(f"UPLOAD_DATA@{fragment}".encode(FORMAT))
-                        fragment = file.read(1024 - 12)
+                        client.send(fragment)
+                        fragment = file.read(1024)
 
                     file.close()
                     client.send("UPLOAD_END".encode(FORMAT))

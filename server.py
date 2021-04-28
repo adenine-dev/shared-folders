@@ -33,7 +33,6 @@ def handle_client(conn, addr):
         print(f"[FAILED CONNECTION] {addr} login/password refused.")
         conn.close()
 
-    active_filename = ""
     active_file = None
     active_command = ""
 
@@ -66,31 +65,37 @@ def handle_client(conn, addr):
         elif cmd == "UPLOAD":
             filename = data[1]
 
-            if filename in os.listdir(cwd):
-                send_data = "ERR@UPLOAD@File exists."
-            else:
-                active_filename = filename
+            if filename in os.listdir(os.path.join(cwd)):
                 active_file = open(os.path.join(
-                    cwd, active_filename), 'w')
+                    cwd, filename), "wb")
+            else:
+                active_file = open(os.path.join(
+                    cwd, filename), "xb")
 
-                active_command = "UPLOAD"
-                send_data = f"OK@UPLOAD@{active_filename}"
+            active_filename = filename
+            active_file = open(os.path.join(
+                cwd, active_filename), 'wb')
 
-            conn.send(send_data.encode(FORMAT))
+            conn.send(f"OK@UPLOAD@{active_filename}".encode(FORMAT))
 
-        elif cmd == "UPLOAD_DATA":
-            if active_file and active_command == "UPLOAD":
-                active_file.write(data[1])
+            while True:
+                data = conn.recv(SIZE)
+                try:
+                    cmd = data.decode(FORMAT).split("@", 1)[0]
+                    if cmd == "UPLOAD_END":
+                        break
+                    else:
+                        active_file.write(data)
+                except UnicodeError:
+                    active_file.write(data)
 
-        elif cmd == "UPLOAD_END":
-            if active_file and active_command == "UPLOAD":
-                active_file.close()
-                conn.send(
-                    f"OK@UPLOAD_END@Successfully uploaded file".encode(FORMAT))
+            active_file.close()
+            conn.send(
+                f"OK@UPLOAD_END@Successfully uploaded file".encode(FORMAT))
 
-                active_file = None
-                active_command = ""
-                active_filename = ""
+            active_file = None
+            active_command = ""
+            active_filename = ""
 
         elif cmd == "DOWNLOAD":
             filename = data[1]
