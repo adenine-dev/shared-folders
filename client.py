@@ -55,7 +55,7 @@ def main():
                 print("Disconnected from the server.")
             elif cmd == "UPLOAD":
                 try:
-                    if data[1] in os.listdir(CLIENT_PATH):
+                    if data[1] in os.listdir(path.join(CLIENT_PATH, cwd)):
                         client.send(f"{cmd}@{data[1]}".encode(FORMAT))
                     else:
                         print("File does not exist.")
@@ -138,7 +138,7 @@ def main():
                     print(f"{res}")
 
                 elif cmd == "CD":
-                    if res == ".":
+                    if res == ".":  # for pretty
                         cwd = ""
                     else:
                         cwd = res.replace("\\", "/")
@@ -156,7 +156,7 @@ def main():
                             f"{file['name']:<{l}} | {f'{modified.hour:02}:{modified.minute:02}':<8} | {file['size']:<8}")
 
                 elif cmd == "UPLOAD":
-                    file = open(os.path.join(CLIENT_PATH, res))
+                    file = open(os.path.join(CLIENT_PATH, cwd, res))
 
                     fragment = file.read(1024 - 12)
                     while fragment:
@@ -173,16 +173,16 @@ def main():
 
                 elif cmd == "DOWNLOAD":
                     f = None
-                    if res in os.listdir(CLIENT_PATH):
-                        f = open(os.path.join(CLIENT_PATH, res), "w")
+                    if res in os.listdir(os.path.join(CLIENT_PATH, cwd)):
+                        f = open(os.path.join(CLIENT_PATH, cwd, res), "w")
                     else:
-                        f = open(os.path.join(CLIENT_PATH, res), "x")
+                        f = open(os.path.join(CLIENT_PATH, cwd, res), "x")
 
                     data = client.recv(SIZE).decode(FORMAT)
                     cmd, res = data.split("@")
                     while cmd != "DOWNLOAD_END":
                         f.write(res)
-                        f.seek(0, 2)
+                        f.seek(0, 2)  # seek to end of write
                         client.send("OK".encode(FORMAT))
                         data = client.recv(SIZE).decode(FORMAT)
                         cmd, res = data.split("@", 1)
