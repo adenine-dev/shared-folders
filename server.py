@@ -3,12 +3,12 @@ import socket
 import threading
 import json
 import sys
-
+import math
 
 IP = "localhost"  # 192.168.1.101
 PORT = 4450
 ADDR = (IP, PORT)
-SIZE = 1024
+SIZE = 2**12
 FORMAT = "utf-8"
 SERVER_PATH = "server"
 
@@ -60,7 +60,8 @@ def handle_client(conn, addr):
             conn.send(send_data.encode(FORMAT))
 
         elif cmd == "UPLOAD":
-            filename = data[1]
+            filename = data[1].split("@")[0]
+            fragments = int(data[1].split("@")[1])
 
             active_file = None
             if filename in os.listdir(os.path.join(cwd)):
@@ -76,16 +77,9 @@ def handle_client(conn, addr):
 
             conn.send(f"OK@UPLOAD@{active_filename}".encode(FORMAT))
 
-            while True:
+            for i in range(fragments):
                 data = conn.recv(SIZE)
-                try:
-                    cmd = data.decode(FORMAT).split("@", 1)[0]
-                    if cmd == "UPLOAD_END":
-                        break
-                    else:
-                        active_file.write(data)
-                except UnicodeError:
-                    active_file.write(data)
+                active_file.write(data)
 
             active_file.close()
             conn.send(
@@ -98,7 +92,7 @@ def handle_client(conn, addr):
                 conn.send("ERR@DOWNLOAD@File does not exist.".encode(FORMAT))
             else:
                 conn.send(
-                    f"OK@DOWNLOAD@{filename}".encode(FORMAT))
+                    f"OK@DOWNLOAD@{filename}@{math.ceil(os.path.getsize(os.path.join(cwd, filename)) / SIZE)}".encode(FORMAT))
 
                 file = open(os.path.join(cwd, filename), "rb")
 
@@ -108,7 +102,6 @@ def handle_client(conn, addr):
                     fragment = file.read(SIZE)
 
                 file.close()
-                conn.send("OK@DOWNLOAD_END".encode(FORMAT))
 
         elif cmd == "DIR":
             send_data = "OK@DIR@" + '{ "files": [' + \

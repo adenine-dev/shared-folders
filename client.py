@@ -2,13 +2,14 @@ import os
 import socket
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import reduce
+import math
 
 IP = "localhost"  # 192.168.1.101
 PORT = 4450
 ADDR = (IP, PORT)
-SIZE = 1024  # byte .. buffer size
+SIZE = 2**12
 FORMAT = "utf-8"
 CLIENT_PATH = "client"
 
@@ -73,7 +74,8 @@ def main():
             elif cmd == "UPLOAD":
                 try:
                     if data[1] in os.listdir(os.path.join(CLIENT_PATH, cwd)):
-                        client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+                        client.send(
+                            f"{cmd}@{data[1]}@{math.ceil(os.path.getsize(os.path.join(CLIENT_PATH, cwd, data[1])) / SIZE)}".encode(FORMAT))
                     else:
                         print("File does not exist.")
                         continue
@@ -184,52 +186,58 @@ def main():
                     end_time = datetime.now()
 
                 elif cmd == "UPLOAD":
+
                     file = open(os.path.join(CLIENT_PATH, cwd, res), "rb")
 
-                    fragment = file.read(1024)
+                    fragment = file.read(SIZE)
                     while fragment:
                         client.send(fragment)
-                        fragment = file.read(1024)
+                        fragment = file.read(SIZE)
 
                     file.close()
-                    client.send("UPLOAD_END".encode(FORMAT))
-
                     data = client.recv(SIZE).decode(FORMAT)
                     status, cmd, res = data.split("@")
+                    if status == "OK":  # no error state?
+                        print(res)
 
                 elif cmd == "DOWNLOAD":
                     active_file = None
-                    if res in os.listdir(os.path.join(CLIENT_PATH, cwd)):
+                    filename = res.split("@")[0]
+                    fragments = int(res.split("@")[1])
+
+                    if filename in os.listdir(os.path.join(CLIENT_PATH, cwd)):
                         active_file = open(os.path.join(
-                            CLIENT_PATH, cwd, res), "wb")
+                            CLIENT_PATH, cwd, filename), "wb")
                     else:
                         active_file = open(os.path.join(
-                            CLIENT_PATH, cwd, res), "xb")
+                            CLIENT_PATH, cwd, filename), "xb")
 
-                    while True:
-                        try:
-                            data = client.recv(SIZE)
-                        except socket.timeout:
-                            print("Socket timed out.")
-                            client.close()
-                            return
+                    last_time = datetime.now()
+                    log_file.write("\n")
+                    for i in range(fragments):
+                        data = client.recv(SIZE)
+                        active_file.write(data)
 
-                        try:
-                            decoded = data.decode(FORMAT)
-                            cmd = decoded.rsplit("@", 1)[1]
-                            if cmd == "DOWNLOAD_END":
-                                if decoded.endswith("OK@DOWNLOAD_END") and len(decoded) > 15:
-                                    active_file.write(data[0:len(decoded)-15])
-                                break
-                            else:
-                                active_file.write(data)
-                        except:
-                            active_file.write(data)
+                        next_time = datetime.now()
+
+                        if (next_time - last_time).microseconds != 0 and i % 20 == 0:
+                            # microseconds for precision, translating to mb/s from b/us is the same as multiplying by 1
+                            rate = (SIZE / (next_time - last_time).microseconds)
+                            log_file.write(
+                                f"\t{next_time}\t\t{(next_time - last_time).microseconds}\t\t{rate}\n")
+
+                            sys.stdout.write(
+                                f"\rspeed (mB/s): {rate:.2f}\t\t\t")
+                            sys.stdout.flush()
+
+                        last_time = datetime.now()
+
+                    sys.stdout.write("\n")
 
                     active_file.close()
 
                     print("file downloaded successfully")
-                    # continue
+
             elif status == "ERR":  # assume all errors are just messages for now.
                 print(f"{res}")
 
