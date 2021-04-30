@@ -22,38 +22,40 @@ def main():
     end_time = None
     log_file = open(f"client_log_{datetime.now().timestamp()}", "w")
 
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.settimeout(10)
-    try:
-        client.connect(ADDR)
-    except socket.timeout:
-        print("Socket Timeout.")
-        log_file.write(f"[{datetime.now()}] Socket timed out\n")
-        return
-    except:
-        print("Connection Error.")
-        log_file.write(f"[{datetime.now()}] Connection Error\n")
-        return
+    #client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #client.settimeout(10)
+    #try:
+    #    client.connect(ADDR)
+    #except socket.timeout:
+    #    print("Socket Timeout.")
+    #    log_file.write(f"[{datetime.now()}] Socket timed out\n")
+    #    return
+    #except:
+    #    print("Connection Error.")
+    #    log_file.write(f"[{datetime.now()}] Connection Error\n")
+    #    return
 
-    data = client.recv(SIZE).decode(FORMAT)
-    status, cmd, res = data.split("@", 3)
-    if status == "ERR":
-        print("Connection failed.")
-        log_file.write(f"[{datetime.now()}] Connection Failed\n")
+    #data = client.recv(SIZE).decode(FORMAT)
+    #status, cmd, res = data.split("@", 3)
+    #if status == "ERR":
+    #    print("Connection failed.")
+    #    log_file.write(f"[{datetime.now()}] Connection Failed\n")
 
-    client.send(f"{LOGIN}@{PASS}".encode(FORMAT))
+    #client.send(f"{LOGIN}@{PASS}".encode(FORMAT))
 
-    data = client.recv(SIZE).decode(FORMAT)
+    #data = client.recv(SIZE).decode(FORMAT)
     # all responses are made up of status@command@data, status is always OK or ERR, command is always a command, and data is any string of data.
-    status, cmd, res = data.split("@", 3)
+    #status, cmd, res = data.split("@", 3)
 
     cwd = ""
 
-    if status == "ERR":
-        print("Server login failed.")
-        loggedIn = False
-    else:
-        loggedIn = True
+    #if status == "ERR":
+    #    print("Server login failed.")
+    #    loggedIn = False
+    #else:
+    #    loggedIn = True
+
+    loggedIn = False
 
     while True:
         data = input(f"SERVER/{cwd} > ")
@@ -170,7 +172,7 @@ def main():
                     else:
                         cwd = res.replace("\\", "/")
 
-                elif cmd == "DIR":
+                elif cmd == "DIR" or cmd == "LS":
                     # TODO: maybe change the way this is printed (more data, kb/mb instead of just bytes?)
                     res = json.loads(res)
                     l = reduce(lambda a, c: max(
