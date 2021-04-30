@@ -5,8 +5,7 @@ import json
 import sys
 import math
 
-HOSTNAME = socket.gethostname()
-IP = socket.gethostbyname(HOSTNAME)  # 192.168.1.101
+IP = socket.gethostbyname_ex(socket.gethostname())[-1][-1]
 PORT = 4450
 ADDR = (IP, PORT)
 SIZE = 2**12
@@ -15,7 +14,6 @@ SERVER_PATH = "server"
 
 LOGIN = "admin"
 PASS = "admin"
-
 
 def handle_client(conn, addr):
 
@@ -85,6 +83,8 @@ def handle_client(conn, addr):
             active_file.close()
             conn.send(
                 f"OK@UPLOAD_END@Successfully uploaded file".encode(FORMAT))
+
+            print(f"[FILE TRANSFER] {addr} uploaded file successfully.")
 
         elif cmd == "DOWNLOAD":
             filename = data[1]
