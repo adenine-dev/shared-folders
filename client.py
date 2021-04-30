@@ -227,8 +227,8 @@ def main():
                         next_time = datetime.now()
 
                         if (next_time - last_time).microseconds != 0 and i % 20 == 0:
-                            # microseconds for precision, translating to mb/s from b/us is the same as multiplying by 1
-                            rate = (SIZE / (next_time - last_time).microseconds)
+                            rate = (len(data) / (next_time -
+                                    last_time).microseconds) * 100
                             log_file.write(
                                 f"\t{next_time}\t\t{(next_time - last_time).microseconds}\t\t{rate}\n")
 

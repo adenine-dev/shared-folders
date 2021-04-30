@@ -64,12 +64,17 @@ def handle_client(conn, addr):
             numbytes = int(data[1].split("@")[1])
 
             active_file = None
-            if filename in os.listdir(os.path.join(cwd)):
-                active_file = open(os.path.join(
-                    cwd, filename), "wb")
-            else:
-                active_file = open(os.path.join(
-                    cwd, filename), "xb")
+            try:
+                if filename in os.listdir(os.path.join(cwd)):
+                    active_file = open(os.path.join(
+                        cwd, filename), "wb")
+                else:
+                    active_file = open(os.path.join(
+                        cwd, filename), "xb")
+            except:
+                conn.send(
+                    f"ERR@UPLOAD@unable to upload at this time".encode(FORMAT))
+                continue
 
             conn.send(f"OK@UPLOAD@{filename}".encode(FORMAT))
 
