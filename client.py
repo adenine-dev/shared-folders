@@ -10,7 +10,7 @@ HOSTNAME = socket.gethostname()
 IP = socket.gethostbyname(HOSTNAME)  # 192.168.1.101
 PORT = 4450
 ADDR = (IP, PORT)
-SIZE = 2**12
+SIZE = 2**10
 FORMAT = "utf-8"
 CLIENT_PATH = "client"
 

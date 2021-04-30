@@ -8,12 +8,13 @@ import math
 IP = socket.gethostbyname_ex(socket.gethostname())[-1][-1]
 PORT = 4450
 ADDR = (IP, PORT)
-SIZE = 2**12
+SIZE = 2**10
 FORMAT = "utf-8"
 SERVER_PATH = "server"
 
 LOGIN = "admin"
 PASS = "admin"
+
 
 def handle_client(conn, addr):
 
