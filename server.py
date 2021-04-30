@@ -73,9 +73,10 @@ def handle_client(conn, addr):
 
             conn.send(f"OK@UPLOAD@{filename}".encode(FORMAT))
 
+            received = 0
             while received < numbytes:
                 data = conn.recv(SIZE)
-                numbytes += len(data)
+                received += len(data)
                 active_file.write(data)
 
             active_file.close()
