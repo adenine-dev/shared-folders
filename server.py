@@ -5,7 +5,8 @@ import json
 import sys
 import math
 
-IP = "localhost"  # 192.168.1.101
+HOSTNAME = socket.gethostname()
+IP = socket.gethostbyname(HOSTNAME)  # 192.168.1.101
 PORT = 4450
 ADDR = (IP, PORT)
 SIZE = 2**12

@@ -6,16 +6,13 @@ from datetime import datetime, timedelta
 from functools import reduce
 import math
 
-IP = "localhost"  # 192.168.1.101
+HOSTNAME = socket.gethostname()
+IP = socket.gethostbyname(HOSTNAME)  # 192.168.1.101
 PORT = 4450
 ADDR = (IP, PORT)
 SIZE = 2**12
 FORMAT = "utf-8"
 CLIENT_PATH = "client"
-
-LOGIN = "admin"
-PASS = "admin"
-
 
 def main():
     start_time = None
@@ -58,7 +55,10 @@ def main():
     loggedIn = False
 
     while True:
-        data = input(f"SERVER/{cwd} > ")
+        if loggedIn == True:
+            data = input(f"SERVER/{cwd} > ")
+        else:
+            data = input(f"> ")
         start_time = datetime.now()
         log_file.write(f"[{start_time}] `{data}` ")
 
