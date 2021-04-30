@@ -14,31 +14,32 @@ SIZE = 2**12
 FORMAT = "utf-8"
 CLIENT_PATH = "client"
 
+
 def main():
     start_time = None
     end_time = None
     log_file = open(f"client_log_{datetime.now().timestamp()}", "w")
 
     #client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #client.settimeout(10)
-    #try:
+    # client.settimeout(10)
+    # try:
     #    client.connect(ADDR)
-    #except socket.timeout:
+    # except socket.timeout:
     #    print("Socket Timeout.")
     #    log_file.write(f"[{datetime.now()}] Socket timed out\n")
     #    return
-    #except:
+    # except:
     #    print("Connection Error.")
     #    log_file.write(f"[{datetime.now()}] Connection Error\n")
     #    return
 
     #data = client.recv(SIZE).decode(FORMAT)
     #status, cmd, res = data.split("@", 3)
-    #if status == "ERR":
+    # if status == "ERR":
     #    print("Connection failed.")
     #    log_file.write(f"[{datetime.now()}] Connection Failed\n")
 
-    #client.send(f"{LOGIN}@{PASS}".encode(FORMAT))
+    # client.send(f"{LOGIN}@{PASS}".encode(FORMAT))
 
     #data = client.recv(SIZE).decode(FORMAT)
     # all responses are made up of status@command@data, status is always OK or ERR, command is always a command, and data is any string of data.
@@ -46,10 +47,10 @@ def main():
 
     cwd = ""
 
-    #if status == "ERR":
+    # if status == "ERR":
     #    print("Server login failed.")
     #    loggedIn = False
-    #else:
+    # else:
     #    loggedIn = True
 
     loggedIn = False
