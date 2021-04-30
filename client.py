@@ -88,7 +88,8 @@ def main():
             elif cmd == "DOWNLOAD":
                 client.send(f"{cmd}@{data[1]}".encode(FORMAT))
 
-            elif cmd == "DIR":
+            elif cmd == "DIR" or cmd == "LS":
+                cmd = "DIR"
                 client.send(cmd.encode(FORMAT))
 
             # All of these commands produce practically the same result, insofar as they will send the same structure of data to the server.

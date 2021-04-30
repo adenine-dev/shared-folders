@@ -81,7 +81,7 @@ def handle_client(conn, addr):
             conn.send(
                 f"OK@UPLOAD_END@Successfully uploaded file".encode(FORMAT))
 
-            print(f"[FILE TRANSFER] {addr} uploaded file successfully.")
+            print(f"[FILE TRANSFER] {addr} uploaded file.")
 
         elif cmd == "DOWNLOAD":
             filename = data[1]
@@ -100,6 +100,8 @@ def handle_client(conn, addr):
                     fragment = file.read(SIZE)
 
                 file.close()
+
+            print(f"[FILE TRANSFER] {addr} downloaded file.")
 
         elif cmd == "DIR":
             send_data = "OK@DIR@" + '{ "files": [' + \
