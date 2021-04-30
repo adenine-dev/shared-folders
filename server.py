@@ -61,7 +61,7 @@ def handle_client(conn, addr):
 
         elif cmd == "UPLOAD":
             filename = data[1].split("@")[0]
-            fragments = int(data[1].split("@")[1])
+            numbytes = int(data[1].split("@")[1])
 
             active_file = None
             if filename in os.listdir(os.path.join(cwd)):
@@ -73,8 +73,9 @@ def handle_client(conn, addr):
 
             conn.send(f"OK@UPLOAD@{filename}".encode(FORMAT))
 
-            for i in range(fragments):
+            while received < numbytes:
                 data = conn.recv(SIZE)
+                numbytes += len(data)
                 active_file.write(data)
 
             active_file.close()
@@ -89,15 +90,14 @@ def handle_client(conn, addr):
             if filename not in os.listdir(cwd):
                 conn.send("ERR@DOWNLOAD@File does not exist.".encode(FORMAT))
             else:
-                fragments = math.ceil(os.path.getsize(
-                    os.path.join(cwd, filename)) / SIZE)
+                numbytes = os.path.getsize(os.path.join(cwd, filename))
                 conn.send(
-                    f"OK@DOWNLOAD@{filename}@{fragments}".encode(FORMAT))
+                    f"OK@DOWNLOAD@{filename}@{numbytes}".encode(FORMAT))
 
                 file = open(os.path.join(cwd, filename), "rb")
 
                 fragment = file.read(SIZE)
-                for i in range(fragments):
+                while fragment:
                     conn.send(fragment)
                     fragment = file.read(SIZE)
 

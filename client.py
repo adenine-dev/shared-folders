@@ -78,7 +78,7 @@ def main():
                 try:
                     if data[1] in os.listdir(os.path.join(CLIENT_PATH, cwd)):
                         client.send(
-                            f"{cmd}@{data[1]}@{math.ceil(os.path.getsize(os.path.join(CLIENT_PATH, cwd, data[1])) / SIZE)}".encode(FORMAT))
+                            f"{cmd}@{data[1]}@{os.path.getsize(os.path.join(CLIENT_PATH, cwd, data[1]))}".encode(FORMAT))
                     else:
                         print("File does not exist.")
                         continue
@@ -205,7 +205,7 @@ def main():
 
                 elif cmd == "DOWNLOAD":
                     filename = res.split("@")[0]
-                    fragments = int(res.split("@")[1])
+                    numbytes = int(res.split("@")[1])
 
                     active_file = None
                     if filename in os.listdir(os.path.join(CLIENT_PATH, cwd)):
@@ -217,8 +217,11 @@ def main():
 
                     last_time = datetime.now()
                     log_file.write("\n")
-                    for i in range(fragments):
+                    received = 0
+                    i = 0  # for limiting the number of times the rate is updated so its readable
+                    while received < numbytes:
                         data = client.recv(SIZE)
+                        received += len(data)
                         active_file.write(data)
 
                         next_time = datetime.now()
@@ -234,6 +237,8 @@ def main():
                             sys.stdout.flush()
 
                         last_time = datetime.now()
+
+                        i += 1
 
                     sys.stdout.write("\n")
 
