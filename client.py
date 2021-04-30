@@ -189,7 +189,6 @@ def main():
                     end_time = datetime.now()
 
                 elif cmd == "UPLOAD":
-
                     file = open(os.path.join(CLIENT_PATH, cwd, res), "rb")
 
                     fragment = file.read(SIZE)
@@ -204,10 +203,10 @@ def main():
                         print(res)
 
                 elif cmd == "DOWNLOAD":
-                    active_file = None
                     filename = res.split("@")[0]
                     fragments = int(res.split("@")[1])
 
+                    active_file = None
                     if filename in os.listdir(os.path.join(CLIENT_PATH, cwd)):
                         active_file = open(os.path.join(
                             CLIENT_PATH, cwd, filename), "wb")

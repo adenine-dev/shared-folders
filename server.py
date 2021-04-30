@@ -64,16 +64,12 @@ def handle_client(conn, addr):
             fragments = int(data[1].split("@")[1])
 
             active_file = None
-            if filename in os.listdir(os.path.join(cwd)):
+            if filename in os.listdir(os.path.join(CLIENT_PATH, cwd)):
                 active_file = open(os.path.join(
-                    cwd, filename), "wb")
+                    CLIENT_PATH, cwd, filename), "wb")
             else:
                 active_file = open(os.path.join(
-                    cwd, filename), "xb")
-
-            active_filename = filename
-            active_file = open(os.path.join(
-                cwd, active_filename), 'wb')
+                    CLIENT_PATH, cwd, filename), "xb")
 
             conn.send(f"OK@UPLOAD@{active_filename}".encode(FORMAT))
 
