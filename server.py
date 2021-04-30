@@ -89,15 +89,19 @@ def handle_client(conn, addr):
             if filename not in os.listdir(cwd):
                 conn.send("ERR@DOWNLOAD@File does not exist.".encode(FORMAT))
             else:
+                fragments = math.ceil(os.path.getsize(
+                    os.path.join(cwd, filename)) / SIZE)
                 conn.send(
-                    f"OK@DOWNLOAD@{filename}@{math.ceil(os.path.getsize(os.path.join(cwd, filename)) / SIZE)}".encode(FORMAT))
+                    f"OK@DOWNLOAD@{filename}@{fragments}".encode(FORMAT))
 
                 file = open(os.path.join(cwd, filename), "rb")
 
                 fragment = file.read(SIZE)
-                while fragment:
+                for i in range(fragments):
                     conn.send(fragment)
                     fragment = file.read(SIZE)
+
+                # d = conn.recv(SIZE)
 
                 file.close()
 
