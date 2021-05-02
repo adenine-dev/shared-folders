@@ -98,8 +98,7 @@ def handle_client(conn, addr):
             else:
                 numbytes = os.path.getsize(os.path.join(cwd, filename))
                 conn.send(
-                    f"OK@DOWNLOAD@{filename}@{numbytes}".encode(FORMAT))
-
+                    f"OK@DOWNLOAD@{os.path.relpath(os.path.join(cwd, filename), SERVER_PATH)}@{numbytes}".encode(FORMAT))
                 file = open(os.path.join(cwd, filename), "rb")
 
                 fragment = file.read(SIZE)
@@ -179,8 +178,7 @@ def handle_client(conn, addr):
         elif cmd == "CD":
             foldername = data[1].rstrip("/\\").lstrip("/\\")
 
-            if os.path.abspath(os.path.join(cwd, foldername)).startswith(
-                    os.path.abspath(SERVER_PATH)):
+            if os.path.exists(os.path.abspath(os.path.join(cwd, foldername))) and os.path.abspath(os.path.join(cwd, foldername)).startswith(os.path.abspath(SERVER_PATH)):
                 cwd = os.path.normpath(os.path.join(cwd, foldername))
                 send_data = f"OK@CD@{os.path.relpath(cwd, SERVER_PATH)}"
 

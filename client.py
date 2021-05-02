@@ -175,7 +175,7 @@ def main():
                         cwd = res.replace("\\", "/")
 
                 elif cmd == "DIR" or cmd == "LS":
-                    # TODO: maybe change the way this is printed (more data, kb/mb instead of just bytes?)
+                    # TODO: maybe change the way this is printed (more data, ~kb/mb instead of just bytes?~ mac/windows uses different units, could cause confusion.)
                     res = json.loads(res)
                     l = reduce(lambda a, c: max(
                         a, len(c['name'])), res["files"], 0)
@@ -207,13 +207,17 @@ def main():
                     filename = res.split("@")[0]
                     numbytes = int(res.split("@")[1])
 
+                    if not os.path.exists(os.path.dirname(os.path.join(CLIENT_PATH, filename))):
+                        os.makedirs(os.path.dirname(
+                            os.path.join(CLIENT_PATH, filename)))
+
                     active_file = None
                     if filename in os.listdir(os.path.join(CLIENT_PATH, cwd)):
                         active_file = open(os.path.join(
-                            CLIENT_PATH, cwd, filename), "wb")
+                            CLIENT_PATH, filename), "wb")
                     else:
                         active_file = open(os.path.join(
-                            CLIENT_PATH, cwd, filename), "xb")
+                            CLIENT_PATH, filename), "xb")
 
                     last_time = datetime.now()
                     log_file.write("\n")
