@@ -230,15 +230,16 @@ def main():
 
                         next_time = datetime.now()
 
-                        if (next_time - last_time).microseconds != 0 and i % 20 == 0:
+                        if (next_time - last_time).microseconds != 0:
                             rate = (len(data) / (next_time -
                                     last_time).microseconds) * 100
                             log_file.write(
-                                f"\t{next_time}\t\t{(next_time - last_time).microseconds}\t\t{rate}\n")
+                                f"\t{next_time}\t{received}\t{len(data)}\t{(next_time - last_time).microseconds}\t{rate}\n")
 
-                            sys.stdout.write(
-                                f"\rspeed (mB/s): {rate:.2f}\t\t\t")
-                            sys.stdout.flush()
+                            if i % 20 == 0:
+                                sys.stdout.write(
+                                    f"\rspeed (mB/s): {rate:.2f}\t\t\t")
+                                sys.stdout.flush()
 
                         last_time = datetime.now()
 
